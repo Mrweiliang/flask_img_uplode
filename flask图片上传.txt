@@ -1,0 +1,37 @@
+1.安装：
+pip install flask_uploads
+2.服务端代码：
+import os
+from flask import render_template,request,session
+from app import app
+from flask_uploads import UploadSet, configure_uploads, IMAGES,patch_request_class,secure_filename
+
+# UPLOAD_FOLDER=os.getcwd()+r'\static\photos\idcards'
+ALLOWED_EXTENSIONS = set(['txt','png','jpg','xls','JPG','PNG','xlsx','gif','GIF'])
+
+app.config['UPLOADED_PHOTOS_DEST'] = os.getcwd()+ '/static/photos/idcards' # 文件储存地址
+photos = UploadSet('photos', IMAGES) #创建UploadSet 拿到UploadSet对象 并设置文件类型为image
+configure_uploads(app, photos) #使用configure_uploads()方法注册并完成相应的配置
+
+# 用于判断文件后缀
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.',1)[1] in ALLOWED_EXTENSIONS
+
+
+
+
+@app.route('/subapply',methods=['POST']) 
+def subapply():
+	if 'loginbean' in session:
+		loginbean = session['loginbean']
+		if request.method == 'POST':
+			shopname = request.form.get('shopname')
+			fArr = ('idcard','ownercard','blicense','hlicense')
+			for item in fArr:
+				f = request.files[item]
+				if f and allowed_file(f.filename):  # 判断是否是允许上传的文件类型
+					filename = photos.save(request.files[item])
+					print(filename)
+		return shopname
+	else:
+		return '<script>alert("session过期,请重新登录");location.href="/";</script>'
